@@ -1,4 +1,23 @@
 spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/vmtech_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 120000
+      connection-timeout: 30000
+
+    jpa:
+      show-sql: true
+      properties:
+        hibernate:
+          format_sql: true
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+          ddl-auto: update
   application:
     name: vm-teste-tecnico
   mail:
@@ -7,6 +26,12 @@ spring:
 jwt:
   secret: "Ab1!Xy9@Lu3#Pq7^ZrLm*Go2$TxQ"
   expiration: 86400000
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    com.vmtech: DEBUG
 
 paths:
   /vmtech/auth/login:

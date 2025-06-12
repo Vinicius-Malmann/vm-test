@@ -11,7 +11,8 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @NoArgsConstructor
-@Schema(description = "DTO para representação de usuário")
+@AllArgsConstructor
+@Builder
 public class UserDTO {
 
     @Schema(description = "ID único do usuário", example = "1")
@@ -19,6 +20,9 @@ public class UserDTO {
 
     @Schema(description = "Nome completo do usuário", example = "Vinícius Exemplo")
     private String name;
+
+    @Schema(description = "Nome completo do usuário", example = "Vinícius Exemplo")
+    private String username;
 
     @Schema(description = "E-mail do usuário", example = "vinicius.exemplo@exemplo.com")
     private String email;

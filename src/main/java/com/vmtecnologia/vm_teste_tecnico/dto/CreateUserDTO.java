@@ -11,9 +11,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 
+import lombok.*;
+
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CreateUserDTO {
     @NotBlank
     private String name;
@@ -26,11 +30,11 @@ public class CreateUserDTO {
     @Size(min = 6)
     private String password;
 
-    // Adicione esses campos que estavam faltando
     @NotBlank
     private String username;
 
-    private String role = "USER"; // Valor padrão
+    @Builder.Default
+    private String role = "USER"; // Valor padrão com @Builder.Default
 
     public User toEntity(PasswordEncoder passwordEncoder) {
         return User.builder()

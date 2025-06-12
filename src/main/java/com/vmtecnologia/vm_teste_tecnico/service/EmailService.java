@@ -25,6 +25,7 @@ public class EmailService {
     private final EmailValidator emailValidator = EmailValidator.getInstance();
 
     public void sendEmail(String to, String subject, String body) {
+        log.info("Email enviado para: {}\nAssunto: {}\nMensagem: {}", to, subject, body);
         validateParameters(to, subject, body);
         send(createSimpleMessage(to, subject, body));
     }

@@ -3,23 +3,18 @@ package com.vmtecnologia.vm_teste_tecnico.service;
 import com.vmtecnologia.vm_teste_tecnico.dto.CreateUserDTO;
 import com.vmtecnologia.vm_teste_tecnico.dto.UpdateUserDTO;
 import com.vmtecnologia.vm_teste_tecnico.dto.UserDTO;
+import com.vmtecnologia.vm_teste_tecnico.exception.BusinessException;
+import com.vmtecnologia.vm_teste_tecnico.exception.EmailSendingException;
 import com.vmtecnologia.vm_teste_tecnico.model.User;
 import com.vmtecnologia.vm_teste_tecnico.repository.UserRepository;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -37,39 +32,62 @@ public class UserService {
 
     @Transactional
     public UserDTO createUser(CreateUserDTO userDTO) {
-        validateEmailNotInUse(userDTO.getEmail());
+        try {
+            validateEmailNotInUse(userDTO.getEmail());
 
-        User user = userDTO.toEntity(passwordEncoder);
-        User savedUser = userRepository.save(user);
+            User user = userDTO.toEntity(passwordEncoder);
+            User savedUser = userRepository.save(user);
 
-        sendWelcomeEmail(savedUser);
+            sendWelcomeEmail(savedUser); // Pode lançar EmailSendingException
 
-        return convertToDTO(savedUser);
+            return convertToDTO(savedUser);
+
+        } catch (EmailSendingException e) {
+            log.error("Falha no envio de email para {}", userDTO.getEmail(), e);
+            throw new BusinessException("Cadastro realizado, mas não foi possível enviar o email de confirmação");
+
+        } catch (DataIntegrityViolationException e) {
+            log.error("Violação de integridade ao criar usuário", e);
+            throw new BusinessException("Email já está em uso");
+
+        } catch (Exception e) {
+            log.error("Erro inesperado ao criar usuário", e);
+            throw new BusinessException("Erro ao processar seu cadastro");
+        }
     }
 
+    @Transactional
     public UserDTO updateUser(Long id, UpdateUserDTO updateUserDTO) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado para o id: " + id));
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado para o id: " + id));
 
-        // Verifica se o novo email (se diferente) não está em uso
-        if (!user.getEmail().equals(updateUserDTO.getEmail())) {
-            validateEmailNotInUse(updateUserDTO.getEmail());
+            if (!user.getEmail().equals(updateUserDTO.getEmail())) {
+                validateEmailNotInUse(updateUserDTO.getEmail());
+            }
+
+            user.setName(updateUserDTO.getName());
+            user.setEmail(updateUserDTO.getEmail());
+
+            if (updateUserDTO.getPassword() != null && !updateUserDTO.getPassword().isEmpty()) {
+                user.setPassword(passwordEncoder.encode(updateUserDTO.getPassword()));
+            }
+
+            if (updateUserDTO.getRole() != null) {
+                user.setRole(updateUserDTO.getRole());
+            }
+
+            User updatedUser = userRepository.save(user);
+            sendUpdateEmail(updatedUser);
+            return convertToDTO(updatedUser);
+
+        } catch (EmailSendingException e) {
+            log.error("Falha no envio de email de atualização", e);
+            throw new BusinessException("Dados atualizados, mas não foi possível enviar o email de confirmação");
+        } catch (Exception e) {
+            log.error("Erro inesperado ao atualizar usuário", e);
+            throw new BusinessException("Erro ao atualizar seus dados");
         }
-
-        // Atualiza os campos
-        user.setName(updateUserDTO.getName());
-        user.setEmail(updateUserDTO.getEmail());
-
-        if (updateUserDTO.getPassword() != null && !updateUserDTO.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(updateUserDTO.getPassword()));
-        }
-
-        if (updateUserDTO.getRole() != null) {
-            user.setRole(updateUserDTO.getRole());
-        }
-
-        User updatedUser = userRepository.save(user);
-        return convertToDTO(updatedUser);
     }
 
 
@@ -88,15 +106,25 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado para o id: " + id));
     }
 
+    @Transactional
     public void deleteUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado para o id: " + id));
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado para o id: " + id));
 
-        userRepository.delete(user);
-        sendAccountDeletionEmail(user);
+            userRepository.delete(user);
+            sendAccountDeletionEmail(user);
+
+        } catch (EmailSendingException e) {
+            log.error("Falha no envio de email de exclusão", e);
+            throw new BusinessException("Conta excluída, mas não foi possível enviar a confirmação");
+        } catch (Exception e) {
+            log.error("Erro inesperado ao excluir usuário", e);
+            throw new BusinessException("Erro ao excluir sua conta");
+        }
     }
 
-    private UserDTO convertToDTO(User user) {
+    UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setName(user.getName());
@@ -107,7 +135,7 @@ public class UserService {
     }
 
 
-    private void validateEmailNotInUse(String email) {
+    void validateEmailNotInUse(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email já cadastrado: " + email);
         }
@@ -117,11 +145,24 @@ public class UserService {
         try {
             emailService.sendEmail(
                     user.getEmail(),
-                    "Cadastro efetuado com sucesso!",
-                    "Olá, " + user.getName() + ",\n\nSua conta foi cadastrada com sucesso!"
+                    "Bem-vindo ao nosso sistema!",
+                    "Olá " + user.getName() + ", seu cadastro foi realizado com sucesso!"
             );
         } catch (Exception e) {
-            log.error("Erro ao enviar email para {}", user.getEmail(), e);
+            throw new EmailSendingException("Falha ao enviar email de boas-vindas", e);
+        }
+    }
+
+    private void sendUpdateEmail(User user) {
+        try {
+            emailService.sendEmail(
+                    user.getEmail(),
+                    "Seus dados foram atualizados!",
+                    "Olá, " + user.getName() + ",\n\n" +
+                            "Informamos que os dados da sua conta foram atualizados com sucesso!"
+            );
+        } catch (Exception e) {
+            log.error("Erro ao enviar email de atualização para {}", user.getEmail(), e);
         }
     }
 
