@@ -1,10 +1,12 @@
 package com.vmtecnologia.vm_teste_tecnico.model;
 
+import com.vmtecnologia.vm_teste_tecnico.dto.UpdateUserDTO;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 
@@ -48,5 +50,17 @@ public class User {
             allowableValues = {"USER", "ADMIN"})
     private String role;
 
+    public void updateFromDTO(UpdateUserDTO dto, PasswordEncoder passwordEncoder) {
+        this.name = dto.getName();
+        this.email = dto.getEmail();
+
+        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+            this.password = passwordEncoder.encode(dto.getPassword());
+        }
+
+        if (dto.getRole() != null) {
+            this.role = dto.getRole();
+        }
+    }
 
 }

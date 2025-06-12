@@ -25,9 +25,6 @@ public class AuthService {
     private final JwtConfig jwtConfig;
     private final UserRepository userRepository;
 
-    Instant now = Instant.now();
-    Instant expiration = now.plusMillis(jwtConfig.getExpirationTime());
-
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
         String username = loginRequest.getUsername();
 
@@ -56,12 +53,13 @@ public class AuthService {
 
     private JwtResponse buildJwtResponse(User user) {
         String token = generateToken(user);
+        Instant expiration = Instant.now().plusMillis(jwtConfig.getExpirationTime());
 
         return JwtResponse.builder()
                 .token(token)
                 .tokenType("Bearer")
-                .expiresIn(jwtConfig.getExpirationTime() / 1000)
-                .expiresAt(expiration)// em segundos
+                .expiresIn(jwtConfig.getExpirationTime() / 1000) // em segundos
+                .expiresAt(expiration)
                 .username(user.getUsername())
                 .build();
     }

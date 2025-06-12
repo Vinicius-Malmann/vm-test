@@ -26,17 +26,7 @@ public class UserDTO {
     @Schema(description = "Data de criação do registro", example = "2024-03-15T10:30:00")
     private LocalDateTime createdAt;
 
-    @Schema(description = "Perfil de acesso do usuário",
-            allowableValues = {"USER", "ADMIN"})
+    @Schema(description = "Perfil de acesso do usuário", allowableValues = {"USER", "ADMIN"})
     private String role;
-
-    // Entity → DTO conversion
-    public UserDTO fromEntity(User user) {
-        this.id = user.getId();
-        this.name = user.name();
-        this.email = user.getEmail();
-        this.createdAt = user.createdAt();
-        this.role = user.getRole();
-    }
 
 }

@@ -18,9 +18,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class EmailService {
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    private final JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")
     private String defaultFromEmail;

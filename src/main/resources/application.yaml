@@ -5,14 +5,15 @@ spring:
     username: vmtech.teste@gmail.com
 
 jwt:
-  secret: Ab1!Xy9@Lu3#Pq7^ZrLm*Go2$TxQ
+  secret: "Ab1!Xy9@Lu3#Pq7^ZrLm*Go2$TxQ"
   expiration: 86400000
 
 paths:
   /vmtech/auth/login:
     post:
-      tags: [Autenticação]
-      summary: Autenticar usuário
+      tags: [auth]
+      summary: "Autenticar usuÃ¡rio"
+      description: "Endpoint para autenticaÃ§Ã£o de usuÃ¡rios"
       requestBody:
         required: true
         content:
@@ -26,7 +27,7 @@ paths:
                 value: { "username": "a", "password": "1" }
       responses:
         '200':
-          description: Autenticação bem-sucedida
+          description: Autenticaï¿½ï¿½o bem-sucedida
           content:
             application/json:
               schema:

@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 public class CreateUserDTO {
-
     @NotBlank
     private String name;
 
@@ -27,15 +26,20 @@ public class CreateUserDTO {
     @Size(min = 6)
     private String password;
 
+    // Adicione esses campos que estavam faltando
+    @NotBlank
+    private String username;
+
+    private String role = "USER"; // Valor padrão
+
     public User toEntity(PasswordEncoder passwordEncoder) {
         return User.builder()
+                .name(this.name)
                 .email(this.email)
                 .username(this.username)
                 .password(passwordEncoder.encode(this.password))
                 .role(this.role)
-                .active(true)
                 .createdAt(LocalDateTime.now())
                 .build();
     }
-
 }

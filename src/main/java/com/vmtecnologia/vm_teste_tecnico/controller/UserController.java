@@ -1,6 +1,7 @@
 package com.vmtecnologia.vm_teste_tecnico.controller;
 
 import com.vmtecnologia.vm_teste_tecnico.dto.CreateUserDTO;
+import com.vmtecnologia.vm_teste_tecnico.dto.UpdateUserDTO;
 import com.vmtecnologia.vm_teste_tecnico.dto.UserDTO;
 import com.vmtecnologia.vm_teste_tecnico.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +33,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping
+    @PostMapping("/createUser")
     @Operation(summary = "Criar novo usuário", description = "Registra um novo usuário no sistema")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso", content = @Content(schema = @Schema(implementation = UserDTO.class))),
@@ -46,6 +47,26 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Atualizar usuário", description = "Atualiza os dados de um usuário existente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário atualizado com sucesso",
+                    content = @Content(schema = @Schema(implementation = UserDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos"),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado"),
+            @ApiResponse(responseCode = "409", description = "Novo e-mail já está em uso")
+    })
+    public ResponseEntity<UserDTO> updateUser(
+            @Parameter(description = "ID do usuário a ser atualizado", required = true)
+            @PathVariable Long id,
+
+            @Valid @RequestBody @Parameter(description = "Dados atualizados do usuário", required = true)
+            UpdateUserDTO updateUserDTO) {
+
+        UserDTO updatedUser = userService.updateUser(id, updateUserDTO);
+        return ResponseEntity.ok(updatedUser);
+    }
+
 
     @GetMapping
     @Operation(summary = "Listar usuários", description = "Retorna lista paginada de usuários com filtro opcional por nome")
@@ -53,7 +74,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "Lista de usuários retornada com sucesso"),
             @ApiResponse(responseCode = "401", description = "Acesso não autorizado")
     })
-    public ResponseEntity<Page<UserDTO>> listarUsers(
+    public ResponseEntity<Page<UserDTO>> findUsers(
             @Parameter(description = "Filtro por parte do nome")
             @RequestParam(required = false) String nome,
 
@@ -72,7 +93,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado"),
             @ApiResponse(responseCode = "401", description = "Acesso não autorizado")
     })
-    public ResponseEntity<UserDTO> buscarUser(
+    public ResponseEntity<UserDTO> findUser(
             @Parameter(description = "ID do usuário a ser buscado", example = "1", required = true)
             @PathVariable Long id) {
 
