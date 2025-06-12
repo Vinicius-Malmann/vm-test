@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: vm-teste-tecnico
+  mail:
+    username: vmtech.teste@gmail.com
+
+jwt:
+  secret: Ab1!Xy9@Lu3#Pq7^ZrLm*Go2$TxQ
+  expiration: 86400000
+
+paths:
+  /vmtech/auth/login:
+    post:
+      tags: [Autenticação]
+      summary: Autenticar usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              validLogin:
+                value: { "username": "usuario123", "password": "Senha@123" }
+              invalidLogin:
+                value: { "username": "a", "password": "1" }
+      responses:
+        '200':
+          description: Autenticação bem-sucedida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtResponse'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."

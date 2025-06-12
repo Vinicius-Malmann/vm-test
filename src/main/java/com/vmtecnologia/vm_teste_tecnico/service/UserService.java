@@ -1,9 +1,14 @@
 package com.vmtecnologia.vm_teste_tecnico.service;
 
+import com.vmtecnologia.vm_teste_tecnico.dto.CreateUserDTO;
 import com.vmtecnologia.vm_teste_tecnico.dto.UserDTO;
 import com.vmtecnologia.vm_teste_tecnico.model.User;
+import com.vmtecnologia.vm_teste_tecnico.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
@@ -24,48 +30,82 @@ import org.springframework.transaction.annotation.Transactional;
 @Tag(name = "Serviço de Usuários", description = "Contém as operações de negócio relacionadas a usuários")
 public class UserService {
 
-    private final UserRepository UserRepository;
-    private final EmailService emailService;
 
-    public User criarUser(createUser dto) {
-        // Verifica se email já existe
-        if (UserRepository.existsByEmail(dto.getEmail())) {
-            throw new EmailJaCadastradoException(dto.getEmail());
+        private final UserRepository userRepository;
+        private final PasswordEncoder passwordEncoder;
+        private final EmailService emailService;
+        private final ModelMapper modelMapper;
+
+        public UserDTO createUser(CreateUserDTO userDTO) {
+            validateEmailNotInUse(userDTO.getEmail());
+
+            User user = convertToEntity(userDTO);
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+            User savedUser = userRepository.save(user);
+
+            sendWelcomeEmail(savedUser);
+
+            return convertToDTO(savedUser);
         }
 
-        // Cria o usuário
-        User User = new User(dto.getNome(), dto.getEmail(), passwordEncoder.encode(dto.getSenha()));
-        User = UserRepository.save(User);
-
-        try {
-            // Envia email (depois de salvar para garantir que o usuário existe)
-            emailService.enviarEmail(
-                    User.getEmail(),
-                    "Cadastro realizado com sucesso",
-                    "Olá " + User.getNome() + ", seu cadastro foi realizado com sucesso!"
-            );
-        } catch (Exception e) {
-            log.error("Falha ao enviar email para o usuário " + User.getEmail(), e);
-            // Não lança exceção para não reverter a transação
+        public Page<UserDTO> usersList(String nameFilter, Pageable pageable) {
+            if (StringUtils.hasText(nameFilter)) {
+                return userRepository.findByNameContainingIgnoreCase(nameFilter, pageable)
+                        .map(this::convertToDTO);
+            }
+            return userRepository.findAll(pageable)
+                    .map(this::convertToDTO);
         }
 
-        return User;
-    }
-
-    public Page<UserDTO> listarUsers(String filtroNome, Pageable pageable) {
-        Page<User> Users;
-        if (filtroNome != null && !filtroNome.isEmpty()) {
-            Users = UserRepository.findByNomeContainingIgnoreCase(filtroNome, pageable);
-        } else {
-            Users = UserRepository.findAll(pageable);
+        public UserDTO findById(Long id) {
+            return userRepository.findById(id)
+                    .map(this::convertToDTO)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
         }
-        return Users.map(UserDTO::new);
+
+        public void deleteUser(Long id) {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+
+            if (hasDependencies(user)) {
+                throw new DataIntegrityViolationException("Cannot delete user with existing references");
+            }
+
+            userRepository.delete(user);
+            sendAccountDeletionEmail(user);
+        }
+
+
+        private void validateEmailNotInUse(String email) {
+            if (userRepository.existsByEmail(email)) {
+                throw new IllegalArgumentException("Email already in use: " + email);
+            }
+        }
+
+        private void sendWelcomeEmail(User user) {
+            try {
+                emailService.sendEmail(
+                        user.getEmail(),
+                        "Welcome to our platform!",
+                        "Hello " + user.getName() + ",\n\nYour account has been successfully created!"
+                );
+            } catch (Exception e) {
+                log.error("Failed to send welcome email to user {}", user.getEmail(), e);
+            }
+        }
+
+        private void sendAccountDeletionEmail(User user) {
+            try {
+                emailService.sendEmail(
+                        user.getEmail(),
+                        "Your account has been deleted",
+                        "Hello " + user.getName() + ",\n\nYour account has been successfully deleted."
+                );
+            } catch (Exception e) {
+                log.error("Failed to send deletion email to user {}", user.getEmail(), e);
+            }
+        }
     }
 
-    public UserDTO buscarPorId(Long id) {
-        User User = UserRepository.findById(id)
-                .orElseThrow(() -> new UserNaoEncontradoException(id));
-        return new UserDTO(User);
-    }
 
 }

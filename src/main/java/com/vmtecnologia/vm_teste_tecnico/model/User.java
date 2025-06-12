@@ -1,19 +1,19 @@
 package com.vmtecnologia.vm_teste_tecnico.model;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
+@Data
+@AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Schema(description = "Entidade que representa um usuário do sistema")
 public class User {
 
@@ -24,7 +24,11 @@ public class User {
 
     @Column(nullable = false, length = 100)
     @Schema(description = "Nome completo do usuário", example = "Vinícius Exemplo", required = true)
-    private String nome;
+    private String name;
+
+    @Column(length = 255, unique = true, nullable = false)
+    @Schema(description = "Nome de usuário para login", example = "viniciuas.teste", requiredMode = Schema.RequiredMode.REQUIRED, pattern = "^[a-zA-Z0-9._-]+$")
+    private String username;
 
     @Column(nullable = false, unique = true, length = 100)
     @Schema(description = "E-mail do usuário", example = "vincius.exemplo@exemplo.com", required = true)
@@ -32,11 +36,17 @@ public class User {
 
     @Column(nullable = false, length = 200)
     @Schema(description = "Senha criptografada do usuário", required = true)
-    private String senha;
+    private String password;
 
     @CreationTimestamp
     @Column(name = "data_criacao", updatable = false)
     @Schema(description = "Data e hora de criação do registro", example = "2024-03-15T10:30:00")
-    private LocalDateTime dataCriacao;
+    private LocalDateTime createdAt;
+
+    @Column(length = 255)
+    @Schema(description = "Perfil de acesso do usuário",
+            allowableValues = {"USER", "ADMIN"})
+    private String role;
+
 
 }

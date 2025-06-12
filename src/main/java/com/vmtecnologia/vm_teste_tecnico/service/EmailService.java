@@ -1,100 +1,100 @@
 package com.vmtecnologia.vm_teste_tecnico.service;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.validator.routines.EmailValidator;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 @Slf4j
-public class EmailSenderService {
+@RequiredArgsConstructor
+public class EmailService {
 
-    /**
-     * Envia um e-mail de forma simulada com tratamento de erros
-     *
-     * @param destinatario Email do destinatário
-     * @param assunto Assunto do e-mail
-     * @param corpo Corpo da mensagem
-     * @return boolean indicando se o envio foi simulado com sucesso
-     */
-    public boolean sendEmail(String destinatario, String assunto, String corpo) {
-        try {
-            // Validação básica dos parâmetros
-            if (destinatario == null || destinatario.isBlank()) {
-                throw new IllegalArgumentException("Destinatário não pode ser vazio");
-            }
+    public EmailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
-            if (assunto == null || assunto.isBlank()) {
-                throw new IllegalArgumentException("Assunto não pode ser vazio");
-            }
+    @Value("${spring.mail.username}")
+    private String defaultFromEmail;
+    private final EmailValidator emailValidator = EmailValidator.getInstance();
 
-            // Simula tempo de processamento (entre 0.5s e 2s)
-            Thread.sleep(500 + (long) (Math.random() * 1500));
+    public void sendEmail(String to, String subject, String body) {
+        validateParameters(to, subject, body);
+        send(createSimpleMessage(to, subject, body));
+    }
 
-            // Simula falha aleatória em 10% dos casos (para testes)
-            if (Math.random() < 0.1) {
-                throw new RuntimeException("Falha simulada no envio de e-mail");
-            }
+    public void sendHtmlEmail(String to, String subject, String htmlContent) {
+        validateParameters(to, subject, htmlContent);
+        send(createMimeMessage(to, subject, htmlContent));
+    }
 
-//            // Registra o envio (simulado)
-//            log.info("""
-//                    ===== E-MAIL SIMULADO =====
-//                    Para: {}
-//                    Assunto: {}
-//                    Corpo: {}
-//                    ===========================
-//                    """, destinatario, assunto, corpo);
+    private void validateParameters(String to, String subject, String content) {
+        validateNotEmpty(to, "Recipient email address cannot be empty");
+        validateNotEmpty(subject, "Email subject cannot be empty");
+        validateNotEmpty(content, "Email content cannot be empty");
+        validateEmailFormat(to);
+    }
 
-            return true;
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Thread interrompida durante envio de e-mail para {}", destinatario, e);
-            return false;
-        } catch (IllegalArgumentException e) {
-            log.warn("Validação falhou para e-mail: {}", e.getMessage());
-            return false;
-        } catch (Exception e) {
-            log.error("Falha ao enviar e-mail para {}", destinatario, e);
-            return false;
+    private void validateNotEmpty(String value, String errorMessage) {
+        if (!StringUtils.hasText(value)) {
+            throw new IllegalArgumentException(errorMessage);
         }
     }
 
-    /**
-     * Versão simplificada para envio de e-mails de notificação
-     *
-     * @param destinatario Email do destinatário
-     * @param nomeDestinatario Nome para personalização
-     * @param tipoTemplate Tipo de template (cadastro, atualizacao, etc.)
-     */
-    public void enviarEmailNotificacao(String destinatario, String nomeDestinatario, String tipoTemplate) {
-        String assunto = switch (tipoTemplate) {
-            case "cadastro" -> "Cadastro realizado com sucesso";
-            case "atualizacao" -> "Seus dados foram atualizados";
-            default -> "Notificação do sistema";
-        };
+    private void validateEmailFormat(String email) {
+        if (!emailValidator.isValid(email)) {
+            throw new IllegalArgumentException("Recipient email address is invalid");
+        }
+    }
 
-        String corpo = switch (tipoTemplate) {
-            case "cadastro" -> String.format("""
-                Olá %s,
-                
-                Bem-vindo ao nosso sistema! Seu cadastro foi realizado com sucesso.
-                
-                Atenciosamente,
-                Equipe de Suporte
-                """, nomeDestinatario);
+    private SimpleMailMessage createSimpleMessage(String to, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+        message.setFrom(defaultFromEmail);
+        return message;
+    }
 
-            case "atualizacao" -> String.format("""
-                Prezado %s,
-                
-                Informamos que seus dados foram atualizados em nosso sistema.
-                
-                Atenciosamente,
-                Equipe de Suporte
-                """, nomeDestinatario);
+    private MimeMessage createMimeMessage(String to, String subject, String htmlContent) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+            helper.setFrom(defaultFromEmail);
+            return message;
+        } catch (MessagingException e) {
+            throw new EmailServiceException("Failed to create MIME message", e);
+        }
+    }
 
-            default -> "Você recebeu uma notificação do sistema.";
-        };
+    private void send(Object message) {
+        try {
+            if (message instanceof SimpleMailMessage) {
+                mailSender.send((SimpleMailMessage) message);
+            } else if (message instanceof MimeMessage) {
+                mailSender.send((MimeMessage) message);
+            }
+            log.info("Email successfully sent");
+        } catch (MailException ex) {
+            log.error("Failed to send email", ex);
+            throw new EmailServiceException("Failed to send email", ex);
+        }
+    }
 
-        enviarEmail(destinatario, assunto, corpo);
+    public static class EmailServiceException extends RuntimeException {
+        public EmailServiceException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }
