@@ -15,11 +15,9 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -112,15 +110,15 @@ class UserControllerTest {
         mockMvc.perform(get("/vmtech/users/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.name").value("Existing User"));
+                .andExpect(jsonPath("$.name").value("Usuário existente"));
     }
 
     @Test
     void getUserById_ShouldReturnNotFound_WhenNotExists() throws Exception {
-        when(userService.findById(99L)).thenThrow(new EntityNotFoundException("User not found"));
+        when(userService.findById(99L)).thenThrow(new EntityNotFoundException("Usuário não encontrado"));
 
         mockMvc.perform(get("/vmtech/users/99"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("User not found"));
+                .andExpect(jsonPath("$.message").value("Usuário não encontrado"));
     }
 }

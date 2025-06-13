@@ -2,7 +2,6 @@ package com.vmtecnologia.vm_teste_tecnico.service;
 
 import com.vmtecnologia.vm_teste_tecnico.config.JwtConfig;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

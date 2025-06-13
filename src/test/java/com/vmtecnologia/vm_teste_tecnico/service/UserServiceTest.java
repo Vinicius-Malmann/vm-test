@@ -79,10 +79,10 @@ class UserServiceTest {
     @Test
     void createUser_ShouldReturnUserDTO_WhenValidInput() {
         // Arrange
-        CreateUserDTO dto = createTestUserDTO("John Doe", "john.doe", "john@email.com", "Senha@123", "USER");
-        User savedUser = createTestUser(1L, "John Doe", "john.doe", "john@email.com", "encodedPassword", "USER");
+        CreateUserDTO dto = createTestUserDTO("Vinicius Vmtech", "vinicius.vmtech", "viniciusvm@email.com", "Senha@123", "USER");
+        User savedUser = createTestUser(1L, "Vinicius Vmtech", "vinicius.vmtech", "viniciusvm@email.com", "encodedPassword", "USER");
 
-        when(userRepository.existsByEmail("john@email.com")).thenReturn(false);
+        when(userRepository.existsByEmail("viniciusvm@email.com")).thenReturn(false);
         when(passwordEncoder.encode("Senha@123")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
@@ -91,16 +91,16 @@ class UserServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals("John Doe", result.getName());
-        assertEquals("john@email.com", result.getEmail());
+        assertEquals("Vinicius Vmtech", result.getName());
+        assertEquals("viniciusvm@email.com", result.getEmail());
         verify(emailService).sendEmail(anyString(), anyString(), anyString());
     }
 
     @Test
     void createUser_ShouldThrow_WhenEmailAlreadyExists() {
         // Arrange
-        CreateUserDTO dto = createTestUserDTO("John Doe", "john.doe", "john@email.com", "Senha@123", "USER");
-        when(userRepository.existsByEmail("john@email.com")).thenReturn(true);
+        CreateUserDTO dto = createTestUserDTO("Vinicius Vmtech", "vinicius.vmtech", "viniciusvm@email.com", "Senha@123", "USER");
+        when(userRepository.existsByEmail("viniciusvm@email.com")).thenReturn(true);
 
         // Act & Assert
         assertThrows(BusinessException.class, () -> userService.createUser(dto));
@@ -110,10 +110,10 @@ class UserServiceTest {
     @Test
     void createUser_ShouldRollback_WhenEmailSendingFails() {
         // Arrange
-        CreateUserDTO dto = createTestUserDTO("John Doe", "john.doe", "john@email.com", "Senha@123", "USER");
-        User user = createTestUser(1L, "John Doe", "john.doe", "john@email.com", "encodedPassword", "USER");
+        CreateUserDTO dto = createTestUserDTO("Vinicius Vmtech", "vinicius.vmtech", "viniciusvm@email.com", "Senha@123", "USER");
+        User user = createTestUser(1L, "Vinicius Vmtech", "vinicius.vmtech", "viniciusvm@email.com", "encodedPassword", "USER");
 
-        when(userRepository.existsByEmail("john@email.com")).thenReturn(false);
+        when(userRepository.existsByEmail("viniciusvm@email.com")).thenReturn(false);
         when(passwordEncoder.encode("Senha@123")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
         doThrow(new EmailSendingException("SMTP error")).when(emailService).sendEmail(anyString(), anyString(), anyString());
@@ -193,8 +193,8 @@ class UserServiceTest {
     void updateUser_ShouldThrow_WhenNewEmailAlreadyExists() {
         // Arrange
         Long userId = 1L;
-        UpdateUserDTO dto = createTestUpdateDTO("John", "existing@email.com", null, null);
-        User existingUser = createTestUser(userId, "John", "john.doe", "john@email.com", "encoded", "USER");
+        UpdateUserDTO dto = createTestUpdateDTO("Vinicius", "existing@email.com", null, null);
+        User existingUser = createTestUser(userId, "Vinicius", "vinicius.vmtech", "viniciusvm@email.com", "encoded", "USER");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
         when(userRepository.existsByEmail("existing@email.com")).thenReturn(true);
@@ -207,10 +207,10 @@ class UserServiceTest {
     @Test
     void usersList_ShouldReturnFilteredUsers_WhenNameFilterProvided() {
         // Arrange
-        String filter = "John";
+        String filter = "Vinicius";
         Pageable pageable = PageRequest.of(0, 10);
         List<User> users = List.of(
-                createTestUser(1L, "John Doe", "john.doe", "john@email.com", "encoded", "USER")
+                createTestUser(1L, "Vinicius Vmtech", "vinicius.vmtech", "viniciusvm@email.com", "encoded", "USER")
         );
         Page<User> page = new PageImpl<>(users);
 
@@ -221,7 +221,7 @@ class UserServiceTest {
 
         // Assert
         assertEquals(1, result.getTotalElements());
-        assertEquals("John Doe", result.getContent().get(0).getName());
+        assertEquals("Vinicius Vmtech", result.getContent().get(0).getName());
     }
 
     @Test
@@ -229,8 +229,8 @@ class UserServiceTest {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
         List<User> users = List.of(
-                createTestUser(1L, "John Doe", "john.doe", "john@email.com", "encoded", "USER"),
-                createTestUser(2L, "Jane Doe", "jane.doe", "jane@email.com", "encoded", "USER")
+                createTestUser(1L, "Vinicius Vmtech", "vinicius.vmtech", "viniciusvm@email.com", "encoded", "USER"),
+                createTestUser(2L, "Jane Vmtech", "jane.doe", "jane@email.com", "encoded", "USER")
         );
         Page<User> page = new PageImpl<>(users);
 
@@ -247,15 +247,15 @@ class UserServiceTest {
     void findById_ShouldReturnUser_WhenExists() {
         // Arrange
         Long userId = 1L;
-        User user = createTestUser(userId, "John Doe", "john.doe", "john@email.com", "encoded", "USER");
+        User user = createTestUser(userId, "Vinicius Vmtech", "vinicius.vmtech", "viniciusvm@email.com", "encoded", "USER");
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // Act
         UserDTO result = userService.findById(userId);
 
         // Assert
-        assertEquals("John Doe", result.getName());
-        assertEquals("john@email.com", result.getEmail());
+        assertEquals("Vinicius Vmtech", result.getName());
+        assertEquals("viniciusvm@email.com", result.getEmail());
     }
 
     @Test
@@ -273,7 +273,7 @@ class UserServiceTest {
     void deleteUser_ShouldDelete_WhenUserExists() {
         // Arrange
         Long userId = 1L;
-        User user = createTestUser(userId, "John Doe", "john.doe", "john@email.com", "encoded", "USER");
+        User user = createTestUser(userId, "Vinicius Vmtech", "vinicius.vmtech", "viniciusvm@email.com", "encoded", "USER");
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // Act
@@ -302,7 +302,7 @@ class UserServiceTest {
     @Test
     void convertToDTO_ShouldConvertCorrectly() {
         // Arrange
-        User user = createTestUser(1L, "John", "john.doe", "john@email.com", "encoded", "ADMIN");
+        User user = createTestUser(1L, "Vinicius", "vinicius.vmtech", "viniciusvm@email.com", "encoded", "ADMIN");
         user.setCreatedAt(LocalDateTime.now());
 
         // Act

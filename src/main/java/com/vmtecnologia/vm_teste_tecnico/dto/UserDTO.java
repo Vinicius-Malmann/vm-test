@@ -1,12 +1,9 @@
 package com.vmtecnologia.vm_teste_tecnico.dto;
 
-import com.vmtecnologia.vm_teste_tecnico.model.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter

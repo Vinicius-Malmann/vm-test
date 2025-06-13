@@ -1,15 +1,9 @@
 package com.vmtecnologia.vm_teste_tecnico.config;
 
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -28,7 +22,7 @@ public class TestSecurityConfig {
     @Bean
     public JwtConfig testJwtConfig() {
         JwtConfig jwtConfig = new JwtConfig();
-        jwtConfig.setSecret("uma-chave-secreta-com-mais-de-32-caracteres-123456");
+        jwtConfig.setSecret("Ab1!Xy9@Lu3#Pq7^ZrLm*Go2$TxQCsaeaefdf");
         jwtConfig.setExpirationTime(86400000L);
         return jwtConfig;
     }
@@ -53,7 +47,7 @@ public class TestSecurityConfig {
         return username -> new org.springframework.security.core.userdetails.User(
                 "testuser",
                 passwordEncoder().encode("password"),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                Collections.singletonList(new SimpleGrantedAuthority("USER"))
         );
     }
 

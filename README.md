@@ -95,42 +95,36 @@ Os testes foram divididos em:
 
 ## 🖥️ Possibilidades para Frontend
 
-### <img src="https://angular.io/assets/images/logos/angular/angular.svg" width="20" height="20"> **Angular**
+### <img src="https://angular.io/assets/images/logos/angular/angular.svg" width="20" height="20"> Angular
 
-**✅ Vantagens:**
+#### ✅ Vantagens
 - **Arquitetura bem definida** - MVC claro com serviços, componentes e módulos
 - **Ferramentas integradas** - CLI poderosa incluindo testes (Karma/Jasmine)
 - **RxJS** - Excelente para chamadas HTTP reativas
 - **Material UI** - Componentes prontos seguindo guidelines do Google
 
-**⚠️ Desafios:**
+#### ⚠️ Desafios
 - Curva de aprendizado acentuada (injetores, decorators, zones)
 - Verbosidade no código
 
-**💻 Exemplo de Implementação:**
-
+#### 💻 Exemplo de Implementação
 ```typescript
 // user.service.ts
 @Injectable({ providedIn: 'root' })
 export class UserService {
-   constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) {}
 
-   getUsers(page: number, filter?: string): Observable<PaginatedResponse<User>> {
-      return this.http.get<PaginatedResponse<User>>('/vmtech/users', {
-         params: {
-            page,
-            size: 10,
-            ...(filter && { nome: filter })
-         }
-      });
-   }
+    getUsers(page: number, filter?: string): Observable<PaginatedResponse<User>> {
+        return this.http.get<PaginatedResponse<User>>('/vmtech/users', {
+            params: { page, size: 10, ...(filter && { nome: filter }) }
+        });
+    }
 }
-
-
+```
+    
 <img src="https://vuejs.org/images/logo.png" width="20" height="20"> Vue 3 (Composition API)
-✅ Vantagens:
-
-        Sintaxe intuitiva - Single-file components (.vue)
+✅ Vantagens
+Sintaxe intuitiva - Single-file components (.vue)
 
 Alta performance - Virtual DOM otimizado
 
@@ -138,19 +132,18 @@ Pinia - Gerenciamento de estado simplificado
 
 Vite - Build tool ultra-rápido
 
-⚠️ Desafios:
-
-        Mudanças frequentes entre versões
+⚠️ Desafios
+Mudanças frequentes entre versões
 
 Menor presença em grandes corporações
 
-💻 Exemplo de Implementação:
+💻 Exemplo de Implementação
 
-        vue
-        <template>
-        <div>
-                <table v-if="users.length">
-        <!-- Lista de usuários -->
+```vue
+<template>
+<div>
+    <table v-if="users.length">
+    <!-- Lista de usuários -->
 </table>
 </div>
 </template>
@@ -162,19 +155,17 @@ const users = ref([]);
 const page = ref(1);
 
 const loadUsers = async () => {
-   const { data } = await axios.get('/vmtech/users', {
-      params: { page: page.value, size: 10 }
-   });
-   users.value = data.content;
+    const { data } = await axios.get('/vmtech/users', {
+        params: { page: page.value, size: 10 }
+    });
+    users.value = data.content;
 };
 </script>
----
-
-## Como rodar o projeto
-
-```bash
-./mvnw clean install
-./mvnw spring-boot:run
+```
+🚀 Como Rodar o Projeto
+bash
+    ./mvnw clean install
+    ./mvnw spring-boot:run
 ```
 
 Acesse a documentação Swagger: `http://localhost:8080/swagger-ui.html`
