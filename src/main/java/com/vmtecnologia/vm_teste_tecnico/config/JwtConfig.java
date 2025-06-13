@@ -31,5 +31,13 @@ public class JwtConfig {
     public long getExpirationTime() {
         return expirationTime;
     }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+    }
+
+    public void setExpirationTime(long expirationTime) {
+        this.expirationTime = expirationTime;
+    }
 }
 

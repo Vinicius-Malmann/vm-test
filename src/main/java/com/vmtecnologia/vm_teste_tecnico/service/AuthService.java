@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,6 +25,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtConfig jwtConfig;
     private final UserRepository userRepository;
+    private final TokenBlacklistService  tokenBlacklistService;
 
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
         String username = loginRequest.getUsername();
@@ -49,6 +51,13 @@ public class AuthService {
             log.warn("Credenciais inválidas para usuário: {}", username);
             throw new AuthenticationServiceException("Credenciais inválidas", e);
         }
+    }
+
+    public void logout(String token) {
+
+        tokenBlacklistService.blacklistToken(token);
+
+        log.info("Token invalidado para logout: {}", token);
     }
 
     private JwtResponse buildJwtResponse(User user) {

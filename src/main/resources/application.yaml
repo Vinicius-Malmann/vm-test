@@ -1,3 +1,7 @@
+server:
+  port: 8080
+
+
 spring:
   datasource:
     url: jdbc:postgresql://postgres:5432/vmtech_db
@@ -24,7 +28,7 @@ spring:
     username: vmtech.teste@gmail.com
 
 jwt:
-  secret: "Ab1!Xy9@Lu3#Pq7^ZrLm*Go2$TxQ"
+  secret: "Ab1!Xy9@Lu3#Pq7^ZrLm*Go2$TxQCsaeaefdf"
   expiration: 86400000
 
 logging:

@@ -166,14 +166,27 @@ class UserServiceTest {
     }
 
     @Test
-    void updateUser_ShouldThrow_WhenUserNotFound() {
+    void updateUser_ShouldThrowBusinessException_WhenUserNotFound() {
         // Arrange
-        Long userId = 99L;
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        Long nonExistentId = 99L;
+        UpdateUserDTO updateDTO = UpdateUserDTO.builder()
+                .name("Novo Nome")
+                .email("novo.email@example.com")
+                .password("NovaSenha@123")
+                .role("ADMIN")
+                .build();
+
+        when(userRepository.findById(nonExistentId))
+                .thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class,
-                () -> userService.updateUser(userId, createTestUpdateDTO(null, null, null, null)));
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
+            userService.updateUser(nonExistentId, updateDTO);
+        });
+
+        assertEquals("Erro ao atualizar seus dados", exception.getMessage());
+        verify(userRepository, times(1)).findById(nonExistentId);
+        verify(userRepository, never()).save(any());
     }
 
     @Test

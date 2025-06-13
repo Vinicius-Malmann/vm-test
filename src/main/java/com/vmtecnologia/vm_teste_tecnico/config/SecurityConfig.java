@@ -1,7 +1,7 @@
 package com.vmtecnologia.vm_teste_tecnico.config;
 
-import com.vmtecnologia.vm_teste_tecnico.config.filters.JwtTokenVerifier;
-import com.vmtecnologia.vm_teste_tecnico.config.filters.JwtUsernamePasswordAuthenticationFilter;
+import com.vmtecnologia.vm_teste_tecnico.config.filters.JwtAuthenticationFilter;
+import com.vmtecnologia.vm_teste_tecnico.service.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,36 +14,49 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.crypto.SecretKey;
 import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
+@RequiredArgsConstructor // Esta configuração não será carregada durante os testes
 public class SecurityConfig {
 
     private final JwtConfig jwtConfig;
+    private final TokenBlacklistService tokenBlacklistService;
     private final UserDetailsService userDetailsService;
 
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecretKey secretKey() {
+        return jwtConfig.getSecretKey();
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(tokenBlacklistService, secretKey());
+    }
+
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ← Aqui você referencia o bean
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/vmtech/auth/login").permitAll()
+                        .requestMatchers("/vmtech/auth/logout").authenticated()
                         .anyRequest().authenticated())
-                .addFilter(new JwtUsernamePasswordAuthenticationFilter(authenticationManager(http), jwtConfig))
-                .addFilterAfter(new JwtTokenVerifier(jwtConfig), JwtUsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
     // Este é o bean de configuração CORS (adicionar dentro da SecurityConfig)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

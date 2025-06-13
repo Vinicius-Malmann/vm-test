@@ -1,17 +1,21 @@
 package com.vmtecnologia.vm_teste_tecnico.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vmtecnologia.vm_teste_tecnico.config.SecurityConfig;
+import com.vmtecnologia.vm_teste_tecnico.config.TestSecurityConfig;
 import com.vmtecnologia.vm_teste_tecnico.dto.CreateUserDTO;
 import com.vmtecnologia.vm_teste_tecnico.dto.UserDTO;
 import com.vmtecnologia.vm_teste_tecnico.service.AuthService;
 import com.vmtecnologia.vm_teste_tecnico.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -26,8 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
-@ActiveProfiles("test")
-@Import({SecurityConfig.class, UserService.class})
+@Import({TestSecurityConfig.class})
 @AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
 
@@ -40,7 +43,17 @@ class UserControllerTest {
     @Mock
     private AuthService authService;
 
+    @InjectMocks
+    private UserController userController;
+
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        // Configurar qualquer comportamento padrão dos mocks aqui
+    }
+
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -62,7 +75,7 @@ class UserControllerTest {
 
         when(userService.createUser(any(CreateUserDTO.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/users")
+        mockMvc.perform(post("/vmtech/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
